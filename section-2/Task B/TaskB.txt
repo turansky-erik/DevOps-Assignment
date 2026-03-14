@@ -1,0 +1,63 @@
+Terraform uses a State File (.tfstate) to map your code to real-world resources.
+
+ When you run terraform apply, Terraform attempts to "lock" this file.
+ 
+ 
+
+The Cause: Terraform found a lock record in your backend. This happens if:
+
+        Concurrent Runs: Another team member (or a CI/CD pipeline) is currently running a terraform apply.
+
+        Ghost Lock: A previous Terraform run crashed or was forcefully interrupted (Ctrl+C) before it could clean up the lock.
+		
+		
+		
+		
+######################################################
+###### short-term ############		
+		
+Find the Lock ID from the error message.
+
+Run:
+PowerShell
+
+terraform force-unlock <LOCK_ID>
+
+
+
+###### long-term ############	
+
+
+1. Create the DynamoDB Table (One-time setup):
+The table must have a Partition Key named LockID (type String).
+
+2. Update your terraform block:
+Modify your code to include the dynamodb_table field:
+Terraform
+
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-storage"
+    key            = "devopsacademy/infra.tfstate"
+    region         = "eu-west-1"
+    # Add this line below
+    dynamodb_table = "terraform-state-locks" 
+    encrypt        = true
+  }
+}
+
+
+
+###################################################################
+
+To prevent these errors and keep the infrastructure stable, teams should follow these three golden rules:
+
+
+    1. Remote State Always: Never keep .tfstate files on your local laptop. Always use a remote backend (S3/Azure Blob/GCS) with a locking mechanism (DynamoDB).
+
+    2. The "Plan" Review: * Always run terraform plan -out=tfplan first.
+
+        Share the plan output in a Pull Request (PR) for peer review before applying.
+
+    3. CI/CD Automation: Move Terraform execution off local machines and into a centralized pipeline (GitHub Actions, GitLab CI, or Terraform Cloud). 
+	This ensures that runs are serialized (one after another) and audit logs are kept for every change.

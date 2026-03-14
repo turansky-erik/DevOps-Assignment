@@ -1,0 +1,43 @@
+----- Identify why the pod keeps crashin------------
+
+ -  application code is explicitly designed to terminate the process after 1000ms.
+
+
+1.The Chain Reaction: Node.js encounters an uncaught exception → The runtime prints the stack trace → The Node process exits with a non-zero status code.
+
+2.Kubelet's Response: Kubernetes notices the container has stopped. Because the default restartPolicy is Always, it tries to restart it.
+
+3.The Loop: The app crashes again immediately upon restart. Kubernetes then applies an exponential backoff delay (10s, 20s, 40s...) to avoid hammering the Node's resources, 
+resulting in the CrashLoopBackOff status
+
+----- Ensure logs and probes reveal the root cause ------
+
+
+ View the logs 
+
+kubectl logs <pod-name> --previous
+
+
+
+
+----  Recommend better crash handling and probes  -----
+
+If you don't define probes, Kubernetes only knows the process has died. 
+By adding Liveness and Readiness probes,
+ you can manage the traffic flow and restart logic more intelligently.
+ 
+ 
+ 
+ YAML
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 3000
+  initialDelaySeconds: 3
+  periodSeconds: 3
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3000
+  initialDelaySeconds: 5

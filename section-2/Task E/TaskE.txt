@@ -1,0 +1,62 @@
+--- Discover why DB_PASSWORD is missing at runtime  --- 
+
+
+There are three likely culprits for a missing Secret at runtime:
+
+1.Namespace Mismatch: This is the most common cause. Secrets are namespaced objects. If your Deployment is in namespace production and the Secret is in default, the Pod will fail to fetch the value.
+
+2.The "Create-Order" Race: If the Deployment was applied before the Secret existed, the Pods may have failed to start or stayed in a CreateContainerConfigError state.
+
+3.Case Sensitivity/Typos: Kubernetes is case-sensitive. A mismatch between db-secret (Deployment) and db-secret-v1 (Secret) will cause a failure.
+
+
+
+---  Fix namespace/applications mismatch or missing resource ----
+
+updated secret.yaml
+YAML
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: my-app-ns # Ensure this matches the Deployment
+type: Opaque
+data:
+  password: c2VjcmV0cGFzcw== # "secretpass"
+
+
+
+
+Updated deployment.yaml
+YAML
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+  namespace: my-app-ns
+spec:
+  template:
+    spec:
+      containers:
+      - name: demo
+        image: node:14
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+
+
+---   Demonstrate debugging (without printing secret in logs)  -- 
+
+
+Bash
+
+kubectl get pods -n my-app-ns
+
+kubectl describe pod <pod-name> -n my-app-ns
+
+kubectl exec <pod-name> -n my-app-ns -- printenv | grep DB_PASSWORD

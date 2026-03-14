@@ -1,0 +1,53 @@
+Diagnose the CI Disk Full Issue
+
+Docker is "hungry" for storage. On a CI/CD runner (like a Jenkins agent or a GitHub Actions runner), the disk space is consumed by:
+
+  1.  Dangling Images: Every time you rebuild an image, the old layers become "dangling" (untagged) but stay on the disk.
+
+  2.  Build Cache: Docker stores every step of your RUN commands to speed up future builds.
+
+  3.  Volumes & Logs: Unused containers and their associated logs can take up gigabytes over time.
+
+  4.  Apt-get Cache: In your specific Dockerfile, apt-get update downloads package lists that are never cleared, 
+	adding unnecessary weight to the image layers.
+	
+	
+	
+######################################################
+
+
+Propose Fixes
+
+--- Short-Term Fix---
+Bash
+docker system prune -a --volumes -f
+
+
+
+---  Permanent Fixes --- 
+
+Dockerfile
+
+# Use a significantly smaller base image
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy only package files first to leverage layer caching
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --production
+
+# Copy the rest of the app
+COPY . .
+
+CMD ["node", "index.js"]
+
+
+############################################################
+
+Monitoring and Prevention Measures
+
+Set up a basic monitoring agent (like Prometheus Node Exporter or Datadog) to track disk utilization.
+Prevention: Implemented a scheduled cleanup policy and configured 80% disk usage alerts.
