@@ -1,0 +1,115 @@
+1. Pause and Validate Context
+
+First I confirm the execution context:
+
+	- Correct workspace/environment (prod vs staging)
+	- Correct branch/commit
+	- Correct Terraform version
+
+Common issues include running Terraform from the wrong workspace or branch.
+
+
+
+2. Review the Plan in Detail
+
+I analyze the plan output carefully to identify:
+
+	- Resources being destroyed or replaced
+	- Changes to stateful components (databases, storage)
+	- Critical infrastructure changes (VPC, IAM, load balancers)
+
+
+Special attention to:
+
+	-/+ resource replacement
+
+This often indicates resource recreation, which could cause downtime or data loss.
+
+
+
+
+3. Inspect Recent Code Changes
+
+Next I check the Git history:
+	- Resource renames
+	- Changes in for_each or count
+	- Module version updates
+	- Variable changes
+	- Provider upgrades
+
+Even a small change like renaming a resource block can trigger a destroy/create operation.
+
+
+
+
+4. Check for Infrastructure Drift
+
+I verify whether the infrastructure changed outside Terraform.
+
+Typical causes:
+	- Manual cloud console changes
+	- Autoscaling modifications
+	- Security policy updates
+
+Running a refresh-only plan helps identify drift.
+
+
+
+
+5. Inspect Terraform State
+
+I validate that the state file still matches the infrastructure:
+
+	- Check tracked resources
+	- Confirm addresses match configuration
+	- Look for missing or outdated state entries
+
+If needed, I may use state move operations instead of recreating resources.
+
+
+6. Verify Provider and Module Versions
+
+Unexpected diffs can occur due to:
+
+	- Provider upgrades
+	- Module updates
+	- Terraform version changes
+
+I check .terraform.lock.hcl and module versions for breaking changes.
+
+
+
+7. Isolate the Change
+
+If the plan is large, I isolate components using targeted planning to determine which module or resource caused the cascade.
+
+
+
+8. Reproduce in a Safe Environment
+Before touching production, I run the plan in:
+
+		- staging
+		- development workspace
+
+This confirms whether the change is expected or environment-specific.
+
+
+
+9. Peer Review
+
+Large infrastructure changes should always go through:
+
+	- Pull request review
+	- Change management approval
+	- Team confirmation
+
+
+
+10. Apply Safely
+
+If everything is validated:
+
+	- Save the plan file
+	- Apply the exact reviewed plan
+
+This ensures no unexpected changes occur between plan and apply.

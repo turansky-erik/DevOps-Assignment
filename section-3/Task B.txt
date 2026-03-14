@@ -1,0 +1,154 @@
+1. Identify Where the Pipeline Is Stuck
+
+First, I open the pipeline execution and determine:
+	-	Which stage is hanging (build, test, deploy)
+	-	Whether the job is running, pending, or waiting for executor
+	-	Whether logs are still streaming
+Typical indicators:
+	-	Pending job → runner capacity issue
+	-	Running but no logs → stuck process
+	-	Waiting for executor → infrastructure limitation
+
+
+
+
+2. Inspect Job Logs
+
+Next, I review the job console logs to see the last successful action.
+
+Common problems I look for:
+
+	- Dependency installation stuck (npm/maven/pip)
+	- Docker build hanging
+	- Network timeout
+	- Script waiting for input
+	- External service call stuck
+	
+	For example, if a job stops at:
+
+		npm install
+
+It might indicate a registry or network issue.
+
+
+
+
+3. Check Runner / Build Agent Health
+
+Pipelines often hang due to runner problems.
+
+For GitLab runners I would check:
+
+	gitlab-runner status
+
+For Jenkins agents I check:
+
+	- Agent availability
+	- Executor usage
+	- Offline nodes
+
+Common issues:
+
+	- Runner offline
+	- Concurrency limit reached
+	- Runner stuck in zombie process state
+
+
+
+4. Inspect Infrastructure Resources
+
+If the runner exists but the job is frozen, I check host resources:
+
+	top
+	htop
+	df -h
+	free -m
+
+Typical root causes:
+
+	- Disk full
+	- CPU starvation
+	- Out-of-memory
+	- Too many concurrent containers
+
+If runners are containerized using Docker or orchestrated via Kubernetes, I inspect containers or pods.
+
+Example:
+
+	docker ps
+	docker logs <container>
+
+or
+
+	kubectl get pods
+	kubectl logs
+	
+	
+	
+5. Check External Dependencies
+
+Pipelines frequently depend on external services:
+
+	- Git repository clone
+	- Container registry
+	- Artifact repository
+	- Package manager
+
+If these are slow or unreachable, the pipeline may stall.
+
+I test connectivity:
+
+		curl registry.example.com
+		ping github.com
+
+For example issues with Docker Hub or private registries can delay builds.
+
+
+
+
+6. Inspect Running Processes
+
+If the job is still running but not progressing, I inspect the runner host.
+
+		ps aux
+
+I check if build tools like:
+
+	- Maven
+	- Gradle
+	- npm
+	- docker build
+
+are stuck or waiting.
+
+
+
+
+Immediate Unblocking Actions
+-------------------------------------------
+
+
+To restore pipeline flow quickly:
+
+		Cancel and retry the job
+		
+		
+
+Fastest fix if issue was transient.
+
+		Restart the runner
+
+	Example:	sudo gitlab-runner restart
+	
+	
+	
+	
+Clean the workspace
+
+	Sometimes corrupted caches block builds.
+
+
+
+Restart Jenkins agent
+
+	For Jenkins environments.

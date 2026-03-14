@@ -1,0 +1,54 @@
+1. Who is affected? (Scope)
+
+    Check the URL: Is it down for me, or for everyone?
+
+    Check the Map: Is it just one region (e.g., US-East) or the whole world?
+
+    Check the Service: Is the whole app dead, or just the "Login" button?
+
+2. Who touched it last? (Changes)
+
+    The Golden Rule: Most outages happen because someone just changed something.
+
+    Action: Check the latest Code Deploys or Server Config changes from the last 30 minutes. If found, Roll Back immediately.
+
+3. Is the "Container" breathing? (App Health)
+
+    Check Logs: Look for the word "ERROR" or "Timeout".
+
+    Check Restarts: Are the app instances constantly crashing and restarting (CrashLoop)?
+
+4. Is the "Engine" overheated? (Infrastructure)
+
+    CPU/Memory: Is the server at 100% usage?
+
+    Disk Space: Is the hard drive full? (A full disk stops everything).
+
+    Reachable: Can I even "ping" the server, or is it totally ghosting?
+
+5. Are the "Helpers" working? (Dependencies)
+
+    Database: Is the database stuck or out of memory?
+
+    Third Parties: Did an external service we use (like AWS, Stripe, or Google Maps) go down?
+
+
+
+Summary Workflow:
+Confirm incident
+Check recent changes
+Investigate application logs
+Verify infrastructure health
+Check dependencies
+Mitigate / rollback / restore service
+Communicate status
+Perform root cause analysis
+Implement long-term fixes
+
+
+The "Quick Fix" Cheat Sheet
+Symptom	Likely Culprit	First Action
+"504 Gateway Timeout"	Database or slow API	Kill long-running queries.
+"502 Bad Gateway"	App is crashed/off	Restart the app service/container.
+"Connection Refused"	Firewall or Port issue	Check Security Groups/Network.
+"No Space Left"	Log files filled up	Delete old logs immediately.
